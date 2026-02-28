@@ -3,7 +3,7 @@ import { SYSTEM_PROMPT, getTime } from '../constants';
 
 // ─── Points to local Express proxy (server.js) ───
 // The proxy adds your API key server-side, avoiding CORS & key exposure.
-const PROXY_URL = 'http://localhost:3001/api/chat';
+const PROXY_URL = '/api/chat';
 
 export function useChat() {
   const [messages, setMessages]     = useState([]);  // { role, text, time }
