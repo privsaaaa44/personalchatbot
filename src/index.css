@@ -1,0 +1,124 @@
+/* ─── Reset & Base ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: 'Jost', sans-serif;
+  background: #F3E8DF;
+  overflow: hidden;
+}
+
+/* ─── Grain texture overlay ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ─── Background glow ─── */
+body::after {
+  content: '';
+  position: fixed;
+  top: -120px;
+  right: -120px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(164,96,74,0.12) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ─── Animations ─── */
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(92,184,92,0.4); }
+  50%       { box-shadow: 0 0 0 5px rgba(92,184,92,0); }
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30%           { transform: translateY(-6px); }
+}
+
+/* ─── Utility Animation Classes ─── */
+.anim-fade-slide { animation: fadeSlideIn 0.35s ease; }
+.anim-welcome    { animation: fadeSlideIn 0.6s ease; }
+
+/* ─── Online dot ─── */
+.online-dot {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 14px;
+  height: 14px;
+  background: #5cb85c;
+  border-radius: 50%;
+  border: 2px solid rgb(69,40,41);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ─── Typing dots ─── */
+.typing-dot {
+  width: 7px;
+  height: 7px;
+  background: #c4846c;
+  border-radius: 50%;
+  animation: bounce 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ─── Scrollbar ─── */
+.messages-scroll::-webkit-scrollbar { width: 4px; }
+.messages-scroll::-webkit-scrollbar-thumb { background: rgba(69,40,41,0.15); border-radius: 4px; }
+.messages-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* ─── Message bubble content ─── */
+.bot-bubble p   { margin-bottom: 6px; }
+.bot-bubble ul  { padding-left: 18px; margin-top: 4px; }
+.bot-bubble li  { margin-bottom: 3px; }
+.bot-bubble strong { font-weight: 600; }
+
+/* ─── Hover states ─── */
+.topic-chip:hover {
+  background: rgba(232,209,197,0.08) !important;
+  color: #F3E8DF !important;
+}
+
+.starter-btn:hover {
+  background: rgb(69,40,41) !important;
+  color: #F3E8DF !important;
+  border-color: rgb(69,40,41) !important;
+  transform: translateY(-1px);
+}
+
+.send-btn:hover:not(:disabled) {
+  background: #a0604a !important;
+  transform: scale(1.05);
+}
+
+.send-btn:active:not(:disabled) {
+  transform: scale(0.95) !important;
+}
+
+/* ─── Textarea ─── */
+textarea { outline: none; }
+
+/* ─── Mobile ─── */
+@media (max-width: 700px) {
+  .sidebar { display: none !important; }
+  .messages-scroll { padding: 18px 16px !important; }
+  .input-area { padding: 14px 16px 18px !important; }
+  .chat-header { padding: 16px 18px !important; }
+}
