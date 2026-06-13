@@ -18,7 +18,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/api/chat", async (req, res) => {
-  const { messages } = req.body;
+  const { system, messages } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "Invalid request body" });
@@ -33,6 +33,11 @@ app.post("/api/chat", async (req, res) => {
   try {
     console.log("Calling Groq API with", messages.length, "messages");
     
+    // Build messages array with system prompt
+    const messagesWithSystem = system 
+      ? [{ role: 'system', content: system }, ...messages]
+      : messages;
+    
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -43,6 +48,7 @@ app.post("/api/chat", async (req, res) => {
         },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
+          messages: messagesWithSystem,
           messages,
           temperature: 0.7,
         }),

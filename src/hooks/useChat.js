@@ -31,6 +31,7 @@ export function useChat() {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          system:   SYSTEM_PROMPT,  // Include system prompt to guide AI behavior
           messages: updatedHistory.slice(-6), // keep last 6 turns for context window
         }),
       });

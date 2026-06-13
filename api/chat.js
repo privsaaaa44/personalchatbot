@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { messages } = req.body;
+  const { system, messages } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "Invalid request body" });
@@ -20,6 +20,11 @@ export default async function handler(req, res) {
   try {
     console.log("Calling Groq API with", messages.length, "messages");
     
+    // Build messages array with system prompt
+    const messagesWithSystem = system 
+      ? [{ role: 'system', content: system }, ...messages]
+      : messages;
+    
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -30,7 +35,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
-          messages,
+          messages: messagesWithSystem,
           temperature: 0.7,
         }),
       }
