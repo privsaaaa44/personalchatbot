@@ -12,6 +12,11 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 
+// Health check
+app.get("/", (req, res) => {
+  res.json({ status: "Server running", apiKeyLoaded: !!process.env.GROQ_API_KEY });
+});
+
 app.post("/api/chat", async (req, res) => {
   const { messages } = req.body;
 
@@ -19,7 +24,15 @@ app.post("/api/chat", async (req, res) => {
     return res.status(400).json({ error: "Invalid request body" });
   }
 
+  // Check if API key exists
+  if (!process.env.GROQ_API_KEY) {
+    console.error("GROQ_API_KEY is not set");
+    return res.status(500).json({ error: "Server configuration error: API key missing" });
+  }
+
   try {
+    console.log("Calling Groq API with", messages.length, "messages");
+    
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -36,23 +49,48 @@ app.post("/api/chat", async (req, res) => {
       }
     );
 
-    const data = await response.json();
-
+    // Check if response is ok before parsing JSON
     if (!response.ok) {
-      console.error("Groq error:", data);
-      return res.status(response.status).json({
-        error: data?.error?.message || "API error",
-      });
+      const errorText = await response.text();
+      console.error("Groq API error (Status " + response.status + "):");
+      console.error("Response URL:", response.url);
+      console.error("Response headers:", Object.fromEntries(response.headers));
+      console.error("Response body:", errorText);
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        console.error("Parsed error:", errorData);
+        return res.status(response.status).json({
+          error: errorData?.error?.message || "API error",
+        });
+      } catch {
+        return res.status(response.status).json({
+          error: `Groq API Error (${response.status}): ${errorText}`,
+        });
+      }
+    }
+
+    // Parse successful response
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseErr) {
+      console.error("Failed to parse Groq response:", parseErr);
+      return res.status(500).json({ error: "Invalid response from API" });
+    }
+
+    const reply = data.choices?.[0]?.message?.content;
+    if (!reply) {
+      console.error("No reply in Groq response:", data);
+      return res.status(500).json({ error: "No response from AI" });
     }
 
     // Send clean response to frontend
-    res.json({
-      reply: data.choices?.[0]?.message?.content,
-    });
+    res.json({ reply });
 
   } catch (err) {
-    console.error("Server error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Server error:", err.message);
+    res.status(500).json({ error: "Internal server error: " + err.message });
   }
 });
 

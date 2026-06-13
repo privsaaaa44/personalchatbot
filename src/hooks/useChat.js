@@ -3,7 +3,7 @@ import { SYSTEM_PROMPT, getTime } from '../constants';
 
 // ─── Points to local Express proxy (server.js) ───
 // The proxy adds your API key server-side, avoiding CORS & key exposure.
-const PROXY_URL = '/api/chat';
+const PROXY_URL = 'http://localhost:3001/api/chat';
 
 export function useChat() {
   const [messages, setMessages]     = useState([]);  // { role, text, time }
@@ -30,12 +30,24 @@ export function useChat() {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system:   SYSTEM_PROMPT,
           messages: updatedHistory.slice(-6), // keep last 6 turns for context window
         }),
       });
 
-      const data = await res.json();
+      // Check response status first
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`Server error (${res.status}):`, errorText);
+        throw new Error(`Server error: ${res.status}`);
+      }
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        console.error('Failed to parse server response:', parseErr);
+        throw new Error('Invalid response from server');
+      }
 
       // Handle proxy/API errors
       if (!res.ok) {
