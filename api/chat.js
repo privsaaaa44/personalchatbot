@@ -11,7 +11,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Invalid request body" });
   }
 
+  // Check if API key exists
+  if (!process.env.GROQ_API_KEY) {
+    console.error("GROQ_API_KEY is not set");
+    return res.status(500).json({ error: "Server configuration error: API key missing" });
+  }
+
   try {
+    console.log("Calling Groq API with", messages.length, "messages");
+    
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -28,17 +36,43 @@ export default async function handler(req, res) {
       }
     );
 
-    const data = await response.json();
-
+    // Check if response is ok before parsing JSON
     if (!response.ok) {
-      return res.status(response.status).json({
-        error: data?.error?.message || "API error",
-      });
+      const errorText = await response.text();
+      console.error("Groq API error (Status " + response.status + "):");
+      console.error("Response body:", errorText);
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        return res.status(response.status).json({
+          error: errorData?.error?.message || "API error",
+        });
+      } catch {
+        return res.status(response.status).json({
+          error: `Groq API Error (${response.status}): ${errorText}`,
+        });
+      }
     }
 
-    res.json({ reply: data.choices?.[0]?.message?.content });
+    // Parse successful response
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseErr) {
+      console.error("Failed to parse Groq response:", parseErr);
+      return res.status(500).json({ error: "Invalid response from API" });
+    }
+
+    const reply = data.choices?.[0]?.message?.content;
+    if (!reply) {
+      console.error("No reply in Groq response:", data);
+      return res.status(500).json({ error: "No response from AI" });
+    }
+
+    res.json({ reply });
 
   } catch (err) {
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Server error:", err.message);
+    res.status(500).json({ error: "Internal server error: " + err.message });
   }
 }

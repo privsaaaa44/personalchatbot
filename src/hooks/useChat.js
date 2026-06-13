@@ -3,7 +3,8 @@ import { SYSTEM_PROMPT, getTime } from '../constants';
 
 // ─── Points to local Express proxy (server.js) ───
 // The proxy adds your API key server-side, avoiding CORS & key exposure.
-const PROXY_URL = 'http://localhost:3001/api/chat';
+// Uses relative URL - works both locally (via Vite proxy) and live (Vercel routes it)
+const PROXY_URL = '/api/chat';
 
 export function useChat() {
   const [messages, setMessages]     = useState([]);  // { role, text, time }
@@ -71,7 +72,7 @@ export function useChat() {
         {
           role: 'bot',
           text: isConnErr
-            ? '⚠️ Cannot reach the server. Make sure you ran **`npm run server`** in your terminal and check that your `.env` file has a valid `ANTHROPIC_API_KEY`.'
+            ? '⚠️ Cannot reach the server. Locally, make sure you ran **`npm run server`**. On Vercel, check that `GROQ_API_KEY` environment variable is set.'
             : `⚠️ Error: ${err.message}`,
           time: getTime(),
         },
